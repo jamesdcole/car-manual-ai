@@ -23,20 +23,29 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',  // Fixed model name
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
-            content: `You are a car repair manual expert. User uploaded manual: ${filename}. Answer questions using manual knowledge ONLY.`
+            content: `You are Perplexity AI - a conversational research assistant. User uploaded document: "${filename}". 
+
+**INSTRUCTIONS:**
+- Answer "${question}" using ONLY this document's content
+- Write naturally like a human expert explaining clearly
+- Use bullet points for lists and key facts
+- Bold important terms like **SAE 5W-30** or **WSS-M2C946-B1**
+- Add helpful notes like "Important:", "Capacity:", "Note:"
+- Be precise, concise, and actionable
+- Sound confident but approachable`
           },
           {
-            role: 'user',
-            content: `${question}\n\nManual context: ${pdfContent}`
+            role: 'user', 
+            content: `${question}\n\nDocument: ${pdfContent}`
           }
         ],
         max_tokens: 500,
         temperature: 0.1
-      }),
+      })
     });
 
     // DEBUG: Log full response
@@ -63,6 +72,7 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 }
+
 
 
 
