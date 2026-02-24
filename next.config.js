@@ -1,14 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false
-    };
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Force webpack (ignore Turbopack)
     return config;
   },
-  serverExternalPackages: ['pdf2json']
-};
+  experimental: {
+    forceWebpack: true
+  }
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
+
