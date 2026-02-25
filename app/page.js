@@ -1,15 +1,34 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-
-export const dynamic = 'force-dynamic';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [message, setMessage] = useState('Loading...');
-  
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const provider = new GoogleAuthProvider();
+
   useEffect(() => {
-    setMessage('✅ page.js = DYNAMIC REACT COMPONENT WORKING!');
-  }, []);
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+      if (currentUser) router.push('/manual');
+    });
+    return unsubscribe;
+  }, [router]);
+
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+  };
+
+  if (loading) return <div style={{padding: '40px', textAlign: 'center'}}>🔄 Loading Firebase...</div>;
 
   return (
     <div style={{ 
@@ -22,33 +41,44 @@ export default function Home() {
       <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
         🚗 Car Manual AI
       </h1>
-      <div style={{ 
-        background: '#f0f9ff', 
-        padding: '2rem', 
-        borderRadius: '12px',
-        marginBottom: '2rem'
-      }}>
-        <p style={{ fontSize: '1.2rem', color: '#0369a1' }}>
-          {message}
-        </p>
-        <p style={{ color: '#64748b', fontSize: '1rem' }}>
-          Build log should now show: <code>λ /</code> (dynamic)
-        </p>
-      </div>
-      <button 
-        style={{
-          background: '#4285f4',
-          color: 'white',
-          border: 'none',
-          padding: '1rem 2rem',
-          fontSize: '1.2rem',
-          borderRadius: '8px',
-          cursor: 'pointer'
-        }}
-        onClick={() => alert('Button works! Add Firebase next!')}
-      >
-        🚀 Test Button (Firebase coming)
-      </button>
+      {!user ? (
+        <button 
+          onClick={login}
+          style={{
+            background: '#4285f4',
+            color: 'white',
+            border: 'none',
+            padding: '1rem 2rem',
+            fontSize: '1.2rem',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          🚀 Login with Google
+        </button>
+      ) : (
+        <div>
+          <p style={{ fontSize: '1.2rem', color: '#10b981' }}>
+            ✅ Logged in as: {user.email}
+          </p>
+          <button 
+            onClick={() => router.push('/manual')}
+            style={{
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '1rem 2rem',
+              fontSize: '1.1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              marginTop: '1rem'
+            }}
+          >
+            📖 Go to Car Manuals
+          </button>
+        </div>
+      )}
     </div>
   );
 }
