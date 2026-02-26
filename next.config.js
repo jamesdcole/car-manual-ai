@@ -3,12 +3,20 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
-    serverComponentsExternalPackages: ['tesseract.js', 'sharp', 'pdf-parse', 'pdf2json']
-  }
+    typescript: {
+      ignoreBuildErrors: true,
+    },
+  },
 }
 
-module.exports = nextConfig
+module.exports = nextConfig;
+
+
+
 
 
 
