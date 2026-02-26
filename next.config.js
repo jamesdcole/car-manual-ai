@@ -1,14 +1,10 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,  // Skip ALL TS errors
-  },
-  eslint: {
-    ignoreDuringBuilds: true, // Skip ALL lint errors
+  typescript: { ignoreBuildErrors: true },
+  webpack: (config) => {
+    config.resolve.fullySpecified = false; // Fix Tailwind
+    return config;
   },
 }
-
-module.exports = nextConfig;
 
 
 
