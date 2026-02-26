@@ -1,5 +1,4 @@
 'use client';
-import '../globals.css';  // ← ADD THIS LINE!
 
 import { useState, useEffect, useRef } from 'react';
 export default function Home() {
@@ -106,7 +105,7 @@ export default function Home() {
         const newBoxes = [...manualBoxes];
         newBoxes[emptyBoxIndex] = {
           id: emptyBoxIndex + 1,
-          name: manualName,
+          name: (manualName || 'Unknown Manual') as string,
           content: result.content,
           filename: result.filename,
           active: true
