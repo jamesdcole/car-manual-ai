@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import '../globals.css';  // ← ADD THIS LINE!
 
+import { useState, useEffect, useRef } from 'react';
 export default function Home() {
   const [status, setStatus] = useState('');
   const [file, setFile] = useState<File | null>(null);

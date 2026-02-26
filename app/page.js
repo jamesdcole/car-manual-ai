@@ -28,57 +28,45 @@ export default function Home() {
     }
   };
 
-  if (loading) return <div style={{padding: '40px', textAlign: 'center'}}>🔄 Loading Firebase...</div>;
+  // LOADING FIRST
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-12 text-center border border-white/50">
+        <div className="text-4xl mb-4">🔄 Loading Firebase...</div>
+      </div>
+    </div>
+  );
 
+  // MAIN LOGIN PAGE
   return (
-    <div style={{ 
-      padding: '40px', 
-      maxWidth: '600px', 
-      margin: '0 auto', 
-      textAlign: 'center',
-      fontFamily: 'system-ui'
-    }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-        🚗 Car Manual AI
-      </h1>
-      {!user ? (
-        <button 
-          onClick={login}
-          style={{
-            background: '#4285f4',
-            color: 'white',
-            border: 'none',
-            padding: '1rem 2rem',
-            fontSize: '1.2rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          🚀 Login with Google
-        </button>
-      ) : (
-        <div>
-          <p style={{ fontSize: '1.2rem', color: '#10b981' }}>
-            ✅ Logged in as: {user.email}
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-8">
+      <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-12 max-w-md w-full text-center border border-white/50">
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-8">
+          🚗 Car Manual AI
+        </h1>
+        
+        {!user ? (
           <button 
-            onClick={() => router.push('/manual')}
-            style={{
-              background: '#10b981',
-              color: 'white',
-              border: 'none',
-              padding: '1rem 2rem',
-              fontSize: '1.1rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              marginTop: '1rem'
-            }}
+            onClick={login}
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-2xl text-xl shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-200 border-0"
           >
-            📖 Go to Car Manuals
+            🚀 Login with Google
           </button>
-        </div>
-      )}
+        ) : (
+          <div className="space-y-4">
+            <p className="text-2xl font-semibold text-emerald-600 bg-emerald-100/50 px-4 py-2 rounded-xl">
+              ✅ Logged in: {user.email}
+            </p>
+            <button 
+              onClick={() => router.push('/manual')}
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-200"
+            >
+              📖 Go to Car Manuals
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
