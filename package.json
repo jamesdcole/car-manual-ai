@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@uploadthing/react": "^7.3.3",
+    "axios": "^1.13.5",
     "firebase": "^12.9.0",
     "next": "16.1.6",
-    "pdf-parse": "^2.4.5",
     "pdf2json": "^4.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",

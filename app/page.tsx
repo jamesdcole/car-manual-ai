@@ -76,88 +76,90 @@ export default function Home() {
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) return setStatus('❌ Select a PDF first');
+const handleUpload = async () => {
+  if (!file) return setStatus('❌ Select a PDF first');
+  
+  // Find first empty box
+  const emptyBoxIndex = manualBoxes.findIndex(box => !box.name);
+  if (emptyBoxIndex === -1) {
+    setStatus('❌ All 3 slots full! Remove a manual first.');
+    return;
+  }
+
+  setIsUploading(true);
+  setUploadProgress(10);
+  setStatus(`⏳ ${(file.size/1000000).toFixed(1)}MB uploading...`);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    setUploadProgress(50);
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const result = await res.json();
     
-    // Find first empty box
-    const emptyBoxIndex = manualBoxes.findIndex(box => !box.name);
-    if (emptyBoxIndex === -1) {
-      setStatus('❌ All 3 slots full! Remove a manual first.');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(10);
-    setStatus(`⏳ ${(file.size/1000000).toFixed(1)}MB uploading...`);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      setUploadProgress(50);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const result = await res.json();
-      
-      setUploadProgress(90);
-      
-      if (result.success) {
-        const manualName = `${result.filename} (${(result.size/1000000).toFixed(1)}MB)`;
-        const newBoxes = [...manualBoxes];
-        newBoxes[emptyBoxIndex] = {
-          id: emptyBoxIndex + 1,
-          name: (manualName || 'Unknown Manual') as string,
-          content: result.content,
-          filename: result.filename,
-          active: true
-        };
-        
-        // Deactivate others
-        newBoxes.forEach((box, i) => {
-          if (i !== emptyBoxIndex) box.active = false;
-        });
-        
-        setManualBoxes(newBoxes);
-        setStatus(`✅ ${manualName} added to Box ${emptyBoxIndex + 1}! Ready to ask.`);
-      } else {
-        setStatus(`❌ ${result.error}`);
-      }
-    } catch (error) {
-      setStatus('❌ Upload failed');
-    } finally {
-      setUploadProgress(100);
-      setTimeout(() => {
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 500);
-    }
-  };
-
-  const handleAsk = async () => {
-    if (!question.trim()) return setAnswer('❌ Enter your question');
-    const activeBox = manualBoxes.find(box => box.active);
-    if (!activeBox?.filename) return setAnswer('❌ Select a manual box first');
+    setUploadProgress(90);
     
-    setIsAsking(true);
-    setAnswer('🤖 AI analyzing manual...');
-
-    try {
-      const res = await fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          filename: activeBox.filename, 
-          question,
-          activeManual: activeBox.name 
-        }),
+    if (result.success) {
+      const manualName = `${result.manualId || file.name || 'Manual'} (${Math.round((file.size || 2000000)/1000000)}MB)`;
+      const newBoxes = [...manualBoxes];
+      newBoxes[emptyBoxIndex] = {
+        id: emptyBoxIndex + 1,
+        name: manualName,
+        content: null,                           // ✅ FIXED: was result.content (undefined)
+        filename: result.manualId,               // ✅ FIXED: always use manualId
+        active: true
+      };
+      
+      // Deactivate other boxes (KEEP THIS ONE ONLY)
+      newBoxes.forEach((box, i) => {
+        if (i !== emptyBoxIndex) box.active = false;
       });
-      const result = await res.json();
-      setAnswer(result.answer || result.error || 'No response');
-    } catch (error) {
-      setAnswer('❌ Ask failed - check console');
-    } finally {
-      setIsAsking(false);
+      
+      setManualBoxes(newBoxes);
+      setStatus(`✅ ${manualName} added to Box ${emptyBoxIndex + 1}! Ready to ask.`);
+    } else {
+      setStatus(`❌ ${result.error}`);
     }
+  } catch (error) {
+    setStatus('❌ Upload failed');
+  } finally {
+    setUploadProgress(100);
+    setTimeout(() => {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }, 500);
   };
+};
+
+ const handleAsk = async () => {
+  if (!question.trim()) return setAnswer('❌ Enter your question');
+  const activeBox = manualBoxes.find(box => box.active);
+  if (!activeBox?.filename) return setAnswer('❌ Select a manual box first');
+  
+  setIsAsking(true);
+  setAnswer('🤖 AI analyzing manual...');
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        question,
+        manualId: activeBox.filename 
+      }),
+    });
+
+    const result = await res.json();
+    console.log('ASK RESULT:', result); // ← add this
+    setAnswer(result.answer || result.error || 'No response');
+  } catch (error) {
+    console.error('ASK ERROR:', error);
+    setAnswer('❌ Ask failed - check console');
+  } finally {
+    setIsAsking(false);
+  }
+};
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !isAsking) {
