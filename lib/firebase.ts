@@ -1,15 +1,16 @@
-// lib/firebase.js - ADD storageBucket!
+// lib/firebase.ts - YOUR EXACT CONFIG
 import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,  // ✅ ADD THIS!
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!
+  apiKey: "AIzaSyCdLNwoizpooBeJwDW2cfHZwrZbTEa2uVk",
+  authDomain: "car-manual-ai-5c053.firebaseapp.com",
+  projectId: "car-manual-ai-5c053",
+  storageBucket: "car-manual-ai-5c053.firebasestorage.app",
+  messagingSenderId: "992162097398",
+  appId: "1:992162097398:web:00a475a7b67840aa7024d7"
 };
 
 const app = initializeApp(firebaseConfig);
-export const storage = getStorage(app);  // ✅ Exports working storage
+export const storage = getStorage(app);
+export default app;

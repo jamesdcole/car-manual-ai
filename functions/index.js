@@ -1,32 +1,129 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const pdfParse = require('pdf-parse');
+const cors = require('cors')({ origin: true });
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+let manualCache = {};
+admin.initializeApp();
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+exports.ask = functions.https.onRequest((req, res) => {
+  // 🔥 CORS HEADERS
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send('');
+    return;
+  }
+  
+  res.set('Access-Control-Allow-Origin', '*');
+  
+  cors(req, res, async () => {
+    try {
+      const { filename, question, manualText } = req.body;
+      
+      // 🔥 PDF.JS CLIENT-SIDE (90% THERE!)
+      if (manualText) {
+        console.log(`📱 PDF.js HIT: ${manualText.length} chars`);
+        
+        const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer sk-12e55ce9f661462a8b1344b7feb0671f',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+              {
+                role: 'system',
+                content: `Master auto mechanic. EXACT page extract from OEM manual.
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+TORQUE: "25 ft-lb (34 N·m)"
+CAPACITY: "5.8 quarts"
+OIL: "0W-20 synthetic"
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+Use ONLY this text.`
+              },
+              {
+                role: 'user',
+                content: `${manualText}\n\nQUESTION: ${question}`
+              }
+            ],
+            max_tokens: 1000,
+            temperature: 0.1
+          })
+        });
+        
+        const deepseekData = await deepseekResponse.json();
+        res.json({ answer: deepseekData.choices[0].message.content });
+        return;
+      }
+      
+      // YOUR PROVEN SERVER FALLBACK
+      const bucket = admin.storage().bucket('car-manual-ai-5c053.firebasestorage.app');
+      const file = bucket.file(`manuals/${filename}`);
+      const cacheKey = filename;
+      
+      if (!manualCache[cacheKey]) {
+        console.log(`🔄 Caching ${filename}...`);
+        const [buffer] = await file.download();
+        const data = await pdfParse(buffer);
+        manualCache[cacheKey] = data.text;
+      }
+      
+      const fullText = manualCache[cacheKey];
+      const smartChunkText = fullText.slice(-48000); // Your working logic
+      
+      const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer sk-12e55ce9f661462a8b1344b7feb0671f',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: `Master auto mechanic. Vehicle manual excerpt.
+
+TORQUE: "25 ft-lb"
+CAPACITY: "5.8 quarts"
+Use provided text only.`
+            },
+            {
+              role: 'user',
+              content: `${smartChunkText}\n\nQUESTION: ${question}`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.1
+        })
+      });
+      
+      const deepseekData = await deepseekResponse.json();
+      res.json({ answer: deepseekData.choices[0].message.content });
+      
+    } catch (error) {
+      console.error('ERROR:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

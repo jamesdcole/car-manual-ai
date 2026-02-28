@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,  // ✅ KILLS WARNING LOOP
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true }
+  output: 'export',           // ← CRITICAL: Static HTML export
+  trailingSlash: true,        // ← Firebase friendly URLs
+  images: { unoptimized: true } // ← No Image Optimization (static)
 };
 
 module.exports = nextConfig;

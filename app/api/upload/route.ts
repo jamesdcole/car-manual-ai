@@ -1,7 +1,9 @@
-// app/api/upload/route.ts - SHARED FIREBASE (No duplicate app!)
 import { NextResponse } from 'next/server';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';  // ✅ Your existing firebase.js!
+import { storage } from '@/lib/firebase';
+
+export const maxDuration = 30;  // ✅ 30s for big PDFs
+export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   try {
@@ -12,10 +14,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file' }, { status: 400 });
     }
 
+    console.log(`📤 Uploading ${file.name} (${Math.round(file.size/1000000)}MB)`);
+    
     const manualId = file.name.replace(/[^a-z0-9.]/gi, '_');
     const storageRef = ref(storage, `manuals/${manualId}`);
 
-    // REAL FIREBASE UPLOAD
     const snapshot = await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
 
@@ -23,7 +26,7 @@ export async function POST(request: Request) {
       success: true,
       manualId,
       url,
-      message: `✅ ${file.name} (${Math.round(file.size/1000000)}MB) added to garage!`
+      message: `✅ ${file.name} (${Math.round(file.size/1000000)}MB) added!`
     });
 
   } catch (error) {
@@ -31,6 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
+
 
 
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { storage } from '@/lib/firebase';  // Your Firebase config
+import { ref, uploadBytes } from 'firebase/storage';
 import { useState, useEffect, useRef } from 'react';
 export default function Home() {
   const [status, setStatus] = useState('');
@@ -90,75 +92,72 @@ const handleUpload = async () => {
   setUploadProgress(10);
   setStatus(`⏳ ${(file.size/1000000).toFixed(1)}MB uploading...`);
 
-  const formData = new FormData();
-  formData.append('file', file);
-
   try {
     setUploadProgress(50);
-    const res = await fetch('/api/upload', { method: 'POST', body: formData });
-    const result = await res.json();
+    
+    // 🔥 FIREBASE STORAGE DIRECT UPLOAD (bypasses Vercel limits)
+    const manualId = file.name.replace(/[^a-z0-9.]/gi, '_');
+    const storageRef = ref(storage, `manuals/${manualId}`);  // from '@/lib/firebase'
+    await uploadBytes(storageRef, file);
     
     setUploadProgress(90);
     
-    if (result.success) {
-      const manualName = `${result.manualId || file.name || 'Manual'} (${Math.round((file.size || 2000000)/1000000)}MB)`;
-      const newBoxes = [...manualBoxes];
-      newBoxes[emptyBoxIndex] = {
-        id: emptyBoxIndex + 1,
-        name: manualName,
-        content: null,                           // ✅ FIXED: was result.content (undefined)
-        filename: result.manualId,               // ✅ FIXED: always use manualId
-        active: true
-      };
-      
-      // Deactivate other boxes (KEEP THIS ONE ONLY)
-      newBoxes.forEach((box, i) => {
-        if (i !== emptyBoxIndex) box.active = false;
-      });
-      
-      setManualBoxes(newBoxes);
-      setStatus(`✅ ${manualName} added to Box ${emptyBoxIndex + 1}! Ready to ask.`);
-    } else {
-      setStatus(`❌ ${result.error}`);
-    }
-  } catch (error) {
-    setStatus('❌ Upload failed');
+    const manualName = `${manualId} (${Math.round(file.size/1000000)}MB)`;
+    const newBoxes = [...manualBoxes];
+    newBoxes[emptyBoxIndex] = {
+      id: emptyBoxIndex + 1,
+      name: manualName,
+      content: null,
+      filename: manualId,  // For your /api/ask later
+      active: true
+    };
+    
+    // Deactivate other boxes
+    newBoxes.forEach((box, i) => {
+      if (i !== emptyBoxIndex) box.active = false;
+    });
+    
+    setManualBoxes(newBoxes);
+    setStatus(`✅ ${manualName} added to Box ${emptyBoxIndex + 1}! Ready to ask.`);
+    
+  } catch (error: any) {
+    setStatus(`❌ Upload failed: ${error.message}`);
   } finally {
     setUploadProgress(100);
     setTimeout(() => {
       setIsUploading(false);
       setUploadProgress(0);
     }, 500);
-  };
+  }
 };
 
- const handleAsk = async () => {
-  if (!question.trim()) return setAnswer('❌ Enter your question');
+const handleAsk = async () => {
   const activeBox = manualBoxes.find(box => box.active);
-  if (!activeBox?.filename) return setAnswer('❌ Select a manual box first');
+  if (!activeBox?.filename) return setStatus('❌ No manual selected');
   
   setIsAsking(true);
-  setAnswer('🤖 AI analyzing manual...');
-
+  setStatus('⏳ Reading manual...');
+  
   try {
-    const res = await fetch('/api/ask', {
+    const res = await fetch('https://us-central1-car-manual-ai-5c053.cloudfunctions.net/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        question,
-        manualId: activeBox.filename 
-      }),
+        filename: activeBox.filename, 
+        question 
+      })
     });
 
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    
     const result = await res.json();
-    console.log('ASK RESULT:', result); // ← add this
-    setAnswer(result.answer || result.error || 'No response');
+    setAnswer(result.answer);
+    setStatus('✅ Ready to ask again!');
   } catch (error) {
-    console.error('ASK ERROR:', error);
-    setAnswer('❌ Ask failed - check console');
-  } finally {
-    setIsAsking(false);
+    setStatus('❌ Ask failed');
   }
+  
+  setIsAsking(false);
 };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

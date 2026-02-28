@@ -1,3 +1,6 @@
+export const maxDuration = 30;
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import PDFParser from 'pdf2json';
 import { writeFile, rm, readFile } from 'fs/promises';  // ✅ readFile ADDED
