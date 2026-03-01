@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',           // ← CRITICAL: Static HTML export
-  trailingSlash: true,        // ← Firebase friendly URLs
-  images: { unoptimized: true } // ← No Image Optimization (static)
-};
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+  // Disable API routes (we use Firebase Functions)
+  experimental: {
+    serverComponentsExternalPackages: []
+  }
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
+

@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "car-manual-ai-5c053"
-  }
+  },
+  "targets": {
+    "car-manual-ai-5c053": {
+      "hosting": {
+        "car-manual-ai": [
+          "hosting"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
