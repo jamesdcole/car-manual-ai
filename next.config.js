@@ -1,12 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  trailingSlash: true,
-  images: { unoptimized: true },
-  // Disable API routes (we use Firebase Functions)
+  output: 'export',          // <— key line
   experimental: {
-    serverComponentsExternalPackages: []
-  }
+    // your experimental flags
+  },
+  serverExternalPackages: ['pdf-parse'],
 }
 
 module.exports = nextConfig

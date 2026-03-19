@@ -1,5 +1,6 @@
-// lib/firebase.ts - YOUR EXACT CONFIG
-import { initializeApp } from 'firebase/app';
+// lib/firebase.ts
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -11,6 +12,8 @@ const firebaseConfig = {
   appId: "1:992162097398:web:00a475a7b67840aa7024d7"
 };
 
-const app = initializeApp(firebaseConfig);
-export const storage = getStorage(app);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+export const auth = getAuth(app);     // ← ADD THIS
+export const storage = getStorage(app); // ← ADD THIS
 export default app;
